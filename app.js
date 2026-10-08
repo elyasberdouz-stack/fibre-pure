@@ -190,7 +190,7 @@ function resetDevis() {
 }
 const resumeTarget = () => {
   if (!count()) return "articles";
-  if (missing().length) return "details";
+  if (missing().length) return "articles";
   if (!D.dept) return "zone";
   if (!D.quand) return "quand";
   return "numero";
@@ -257,7 +257,7 @@ function msgClient() {
     "",
     `📍 ${deptTxt()}`,
     `🗓 ${D.quandLbl}`,
-    `👤 ${D.prenom || ""} · ${telNational(D.tel)}`.trim(),
+    `👤 ${[D.prenom, telNational(D.tel)].filter(Boolean).join(" · ")}`,
     viaTxt() ? `📣 Je vous ai trouvé sur ${viaTxt()}` : ""
   ].filter((l, i, a) => l !== "" || i < a.length - 1).join("\n");
 }
@@ -276,15 +276,14 @@ function envoyerAuto(texte) {
 /* ------------------------------------------------------------------ */
 /* Navigation                                                          */
 /* ------------------------------------------------------------------ */
-const STEP = { articles: 1, details: 2, zone: 3, quand: 4, numero: 5, devis: 5 };
-const STEPS = 5;
+const STEP = { articles: 1, zone: 2, quand: 3, numero: 4, devis: 4 };
+const STEPS = 4;
 let depth = 0;
 let useHistory = true;
-const prevOf = (p) => ({ articles: "home", details: "articles", zone: "details", quand: "zone", numero: "quand", devis: "numero" })[p] || "home";
+const prevOf = (p) => ({ articles: "home", zone: "articles", quand: "zone", numero: "quand", devis: "numero" })[p] || "home";
 function guard(p) {
   const is = (list) => list.includes(p);
-  if (is(["details", "zone", "quand", "numero", "devis"]) && !count()) return "articles";
-  if (is(["zone", "quand", "numero", "devis"]) && missing().length) return "details";
+  if (is(["zone", "quand", "numero", "devis"]) && (!count() || missing().length)) return "articles";
   if (is(["quand", "numero", "devis"]) && !D.dept) return "zone";
   if (is(["numero", "devis"]) && !D.quand) return "quand";
   if (p === "devis" && !D.ref) return "numero";
@@ -367,43 +366,36 @@ const VIEWS = {
     <div class="page">
       ${head("Qu'est-ce qu'on nettoie&nbsp;?", "Ajoute tout ce que tu veux faire nettoyer.", stepK("articles"))}
       <div class="promo"><span class="promo__ico">${icon("percent", "ico--s")}</span><p>Plus il y en a, moins c'est cher<b>−${S.remises.deux}&nbsp;% dès 2 articles, −${S.remises.trois}&nbsp;% dès 3</b></p></div>
-      <div class="items">${ART.map((a) => `
-        <div class="item${D.qty[a.id] ? " is-on" : ""}">
-          <span class="item__ico">${icon(a.icone)}</span>
-          <span class="item__main"><span class="item__t">${esc(a.nom)}</span><span class="item__d">${esc(a.detail)}</span><span class="item__p">${a.tailles ? `dès ${euro(fromOf(a))}` : `${euro(a.prix)} / pièce`}</span></span>
-          ${qtyHtml(a)}
-        </div>`).join("")}</div>
-      <p class="note">Prix déplacement compris. Minimum d'intervention : ${euro(S.minimum)}.</p>
-    </div>`,
-
-  details: () => {
-    const cfgs = chosen().filter((a) => a.tailles);
-    return `
-      <div class="page">
-        ${head(cfgs.length ? "Dis-nous en un peu plus" : "Un besoin particulier&nbsp;?", cfgs.length ? "Pour te donner le prix exact." : "Tout est facultatif.", stepK("details"))}
-        ${cfgs.map((a) => {
-          const c = D.cfg[a.id];
-          return `
-          <section class="cfg${c.taille ? "" : " is-missing"}" id="cfg-${a.id}">
-            <div class="cfg__head"><span class="item__ico">${icon(a.icone)}</span><b>${esc(a.nom)}</b>${D.qty[a.id] > 1 ? `<span class="cfg__qty">× ${D.qty[a.id]}</span>` : ""}</div>
-            <p class="cfg__label">Taille</p>
+      <div class="items">${ART.map((a) => {
+        const q = D.qty[a.id];
+        const c = D.cfg[a.id];
+        const cfg = q && a.tailles ? `
+          <div class="item__cfg" id="cfg-${a.id}">
+            <p class="cfg__label${c.taille ? "" : " is-missing"}">${c.taille ? "Taille" : "Choisis la taille"}</p>
             <div class="chips">${a.tailles.map((t) => `<button type="button" class="chip" data-art="${a.id}" data-size="${t[0]}" data-k="size-${a.id}-${t[0]}" aria-pressed="${c.taille === t[0]}">${esc(cap(t[1]))}<small>${euro(t[2])}</small></button>`).join("")}</div>
             ${a.choix ? `
             <p class="cfg__label">${esc(a.choix.label)}</p>
             <div class="chips">${a.choix.options.map((o) => `<button type="button" class="chip" data-art="${a.id}" data-choix="${o[0]}" data-k="choix-${a.id}-${o[0]}" aria-pressed="${c.choix === o[0]}">${esc(o[1])}${o[2] ? `<small>+${euro(o[2])}</small>` : ""}</button>`).join("")}</div>` : ""}
-            ${D.qty[a.id] > 1 && a.id !== "chaise" ? `<p class="note">Tailles différentes ? Précise-le sur WhatsApp, on ajuste le prix.</p>` : ""}
-          </section>`;
-        }).join("")}
-        ${cfgs.length ? `<p class="section-t">Un besoin particulier&nbsp;?</p>` : ""}
-        <div class="list">${OPT.map((o) => `
+            ${q > 1 ? `<p class="note">Tailles différentes ? Précise-le sur WhatsApp, on ajuste le prix.</p>` : ""}
+          </div>` : "";
+        return `
+        <div class="cell${q ? " is-on" : ""}">
+          <div class="item">
+            <span class="item__ico">${icon(a.icone)}</span>
+            <span class="item__main"><span class="item__t">${esc(a.nom)}</span><span class="item__d">${esc(a.detail)}</span><span class="item__p">${a.tailles ? `dès ${euro(fromOf(a))}` : `${euro(a.prix)} / pièce`}</span></span>
+            ${qtyHtml(a)}
+          </div>${cfg}
+        </div>`;
+      }).join("")}</div>
+      <p class="section-t">Un besoin particulier&nbsp;? <span style="text-transform:none;letter-spacing:0">(facultatif)</span></p>
+      <div class="list">${OPT.map((o) => `
           <button type="button" class="row" data-opt="${o.id}" data-k="opt-${o.id}" aria-pressed="${D.opts.includes(o.id)}">
             <span class="box">${icon("check")}</span>
             <span class="row__main"><span class="row__t">${esc(o.nom)}</span><span class="row__d">${esc(o.detail)}</span></span>
             <span class="row__p">+${euro(o.prix)}</span>
           </button>`).join("")}</div>
-        <p class="note">Options facultatives, prix pour toute l'intervention.</p>
-      </div>`;
-  },
+      <p class="note">Prix déplacement compris, options pour toute l'intervention. Minimum d'intervention : ${euro(S.minimum)}.</p>
+    </div>`,
 
   zone: () => `
     <div class="page">
@@ -500,17 +492,11 @@ function barHtml() {
   const btn = (label, act, disabled) => `<button type="button" class="btn btn--accent" data-act="${act}"${disabled ? " disabled" : ""}>${label}</button>`;
   if (page === "articles") {
     const c = calc();
-    const sum = !c.n ? "<span>Ajoute au moins un article</span>"
-      : `<span>${c.n} article${c.n > 1 ? "s" : ""}${c.pct ? ` · −${c.pct}&nbsp;%` : ""}</span><span>${c.exact ? "" : "dès "}<b>${euro(c.total)}</b></span>`;
-    return `<div class="bar__sum">${sum}</div>${btn("Continuer", "next-articles", !c.n)}`;
-  }
-  if (page === "details") {
-    const c = calc();
     const miss = missing();
-    const sum = miss.length
-      ? `<span>Choisis la taille : ${esc(miss.map((a) => a.nom.toLowerCase()).join(", "))}</span>`
-      : `<span>${c.n} article${c.n > 1 ? "s" : ""}${c.opts.length ? ` + ${c.opts.length} option${c.opts.length > 1 ? "s" : ""}` : ""}</span><span><b>${euro(c.total)}</b></span>`;
-    return `<div class="bar__sum">${sum}</div>${btn("Continuer", "next-details", false)}`;
+    const sum = !c.n ? "<span>Ajoute au moins un article</span>"
+      : miss.length ? `<span>Choisis la taille : ${esc(miss.map((x) => x.nom.toLowerCase()).join(", "))}</span><span>dès <b>${euro(c.total)}</b></span>`
+      : `<span>${c.n} article${c.n > 1 ? "s" : ""}${c.pct ? ` · −${c.pct}&nbsp;%` : ""}${c.opts.length ? ` + ${c.opts.length} option${c.opts.length > 1 ? "s" : ""}` : ""}</span><span><b>${euro(c.total)}</b></span>`;
+    return `<div class="bar__sum">${sum}</div>${btn("Continuer", "next-articles", !c.n)}`;
   }
   return "";
 }
@@ -575,10 +561,7 @@ document.addEventListener("click", (ev) => {
   const act = t.closest("[data-act]");
   if (!act || act.disabled) return;
   switch (act.dataset.act) {
-    case "next-articles":
-      go("details");
-      break;
-    case "next-details": {
+    case "next-articles": {
       const miss = missing();
       if (miss.length) {
         const el = $(`#cfg-${miss[0].id}`);

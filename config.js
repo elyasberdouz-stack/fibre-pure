@@ -114,7 +114,9 @@ window.SITE = {
     { prenom: "Laura", lieu: "Boulogne", note: 5, prestation: "Canapé 3 places en velours",
       texte: "Très soigneuse avec le velours, et le prix était exactement celui du devis." },
     { prenom: "Yacine", lieu: "Créteil", note: 4, prestation: "Tapis + fauteuil",
-      texte: "Il a fallu patienter pour le séchage, mais le résultat est impressionnant." }
+      texte: "Il a fallu patienter pour le séchage, mais le résultat est impressionnant." },
+    { prenom: "Mélanie", lieu: "Versailles", note: 5, prestation: "Canapé 3 places + 2 fauteuils",
+      texte: "Rendez-vous calé le jour même sur WhatsApp. Le technicien a protégé le parquet et a tout laissé impeccable." }
   ],
 
   /* ---------------- FAQ ----------------

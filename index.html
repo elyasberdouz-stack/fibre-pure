@@ -193,9 +193,15 @@ body.has-bar .view{padding-bottom:170px}
 
 /* Articles à nettoyer */
 .items{display:grid;border-radius:18px;background:var(--card);border:1px solid var(--line);overflow:hidden;box-shadow:var(--shadow)}
-.item{display:flex;align-items:center;gap:14px;padding:14px 14px 14px 16px;border-top:1px solid var(--line);transition:background-color .15s,box-shadow .15s}
-.item:first-child{border-top:0}
-.item.is-on{background:var(--card-hi);box-shadow:inset 3px 0 0 var(--accent)}
+.cell{border-top:1px solid var(--line);transition:background-color .15s,box-shadow .15s}
+.cell:first-child{border-top:0}
+.cell.is-on{background:var(--card-hi);box-shadow:inset 3px 0 0 var(--accent)}
+.item{display:flex;align-items:center;gap:14px;padding:14px 14px 14px 16px}
+.item__cfg{display:grid;gap:10px;padding:0 16px 16px 16px;animation:pageIn .25s ease both}
+.item__cfg .chips{gap:7px}
+.item__cfg .chip{min-height:38px;padding:0 12px;font-size:.92rem;background:var(--card)}
+.item__cfg .chip[aria-pressed="true"]{background:var(--accent)}
+.cfg__label.is-missing{color:var(--accent)}
 .item__ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:none;background:var(--accent-soft);color:var(--accent)}
 .item__ico .ico{width:26px;height:26px}
 .item__main{flex:1;min-width:0}
